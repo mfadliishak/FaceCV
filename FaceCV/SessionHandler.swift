@@ -23,10 +23,12 @@ class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, A
     }
     
     func openSession() {
-        let device = AVCaptureDevice.devices(for: AVMediaType.video)
-            .map { $0 }
-            .filter { $0.position == .front}
-            .first!
+        //let frame = CMTimeMake(value: 1, timescale: 20) //フレームレート
+        let position = AVCaptureDevice.Position.front //フロントカメラかバックカメラか
+        
+        let device = AVCaptureDevice.default(AVCaptureDevice.DeviceType.builtInWideAngleCamera,
+                                             for: AVMediaType.video,
+                                             position: position)!
         
         let input = try! AVCaptureDeviceInput(device: device)
         
@@ -84,6 +86,12 @@ class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, A
     
     func captureOutput(_ output: AVCaptureOutput, didDrop sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         print("DidDropSampleBuffer")
+        
+        connection.videoOrientation = AVCaptureVideoOrientation.portrait
+        
+        if connection.isVideoMirroringSupported {
+            connection.isVideoMirrored = true
+        }
     }
     
     // MARK: AVCaptureMetadataOutputObjectsDelegate
