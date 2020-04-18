@@ -13,6 +13,14 @@
 		2D2DF0A4244B12BC00A368DE /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2D2DF0A2244B12BC00A368DE /* Main.storyboard */; };
 		2D2DF0A6244B12BD00A368DE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2D2DF0A5244B12BD00A368DE /* Assets.xcassets */; };
 		2D2DF0A9244B12BD00A368DE /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2D2DF0A7244B12BD00A368DE /* LaunchScreen.storyboard */; };
+		2D2DF0B3244B12E900A368DE /* ProcessImage.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2D2DF0B2244B12E900A368DE /* ProcessImage.mm */; };
+		2D818E87244B1F3000552304 /* dlib_ios.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2D818E85244B1F3000552304 /* dlib_ios.mm */; };
+		2D818E89244B20B600552304 /* shape_predictor_68_face_landmarks.dat in Resources */ = {isa = PBXBuildFile; fileRef = 2D818E88244B20B600552304 /* shape_predictor_68_face_landmarks.dat */; };
+		2D818E8B244B223800552304 /* opencv2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2D818E8A244B223800552304 /* opencv2.framework */; };
+		2D818EA0244B331700552304 /* libdlib.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2D818E9F244B331700552304 /* libdlib.a */; };
+		2D818EA7244B4B8000552304 /* DlibWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2D818EA6244B4B7F00552304 /* DlibWrapper.mm */; };
+		2D818EAB244B536F00552304 /* SessionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D818EAA244B536F00552304 /* SessionHandler.swift */; };
+		2DAD25A5244B1C960096AA93 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2DAD25A4244B1C960096AA93 /* Accelerate.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +32,18 @@
 		2D2DF0A5244B12BD00A368DE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2D2DF0A8244B12BD00A368DE /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		2D2DF0AA244B12BD00A368DE /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		2D2DF0B0244B12E800A368DE /* FaceCV-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "FaceCV-Bridging-Header.h"; sourceTree = "<group>"; };
+		2D2DF0B1244B12E900A368DE /* ProcessImage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ProcessImage.h; sourceTree = "<group>"; };
+		2D2DF0B2244B12E900A368DE /* ProcessImage.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ProcessImage.mm; sourceTree = "<group>"; };
+		2D818E85244B1F3000552304 /* dlib_ios.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = dlib_ios.mm; sourceTree = "<group>"; };
+		2D818E86244B1F3000552304 /* dlib_ios.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dlib_ios.h; sourceTree = "<group>"; };
+		2D818E88244B20B600552304 /* shape_predictor_68_face_landmarks.dat */ = {isa = PBXFileReference; lastKnownFileType = file; name = shape_predictor_68_face_landmarks.dat; path = lib/shape_predictor_68_face_landmarks.dat; sourceTree = "<group>"; };
+		2D818E8A244B223800552304 /* opencv2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = opencv2.framework; sourceTree = "<group>"; };
+		2D818E9F244B331700552304 /* libdlib.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libdlib.a; sourceTree = "<group>"; };
+		2D818EA5244B4B7F00552304 /* DlibWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DlibWrapper.h; sourceTree = "<group>"; };
+		2D818EA6244B4B7F00552304 /* DlibWrapper.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DlibWrapper.mm; sourceTree = "<group>"; };
+		2D818EAA244B536F00552304 /* SessionHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SessionHandler.swift; sourceTree = "<group>"; };
+		2DAD25A4244B1C960096AA93 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -31,6 +51,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2D818E8B244B223800552304 /* opencv2.framework in Frameworks */,
+				2DAD25A5244B1C960096AA93 /* Accelerate.framework in Frameworks */,
+				2D818EA0244B331700552304 /* libdlib.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -40,8 +63,11 @@
 		2D2DF090244B12BC00A368DE = {
 			isa = PBXGroup;
 			children = (
+				2D818E9F244B331700552304 /* libdlib.a */,
+				2D818E88244B20B600552304 /* shape_predictor_68_face_landmarks.dat */,
 				2D2DF09B244B12BC00A368DE /* FaceCV */,
 				2D2DF09A244B12BC00A368DE /* Products */,
+				2DAD25A3244B1C960096AA93 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -56,15 +82,32 @@
 		2D2DF09B244B12BC00A368DE /* FaceCV */ = {
 			isa = PBXGroup;
 			children = (
+				2D818EA5244B4B7F00552304 /* DlibWrapper.h */,
+				2D818EA6244B4B7F00552304 /* DlibWrapper.mm */,
+				2D818E86244B1F3000552304 /* dlib_ios.h */,
+				2D818E85244B1F3000552304 /* dlib_ios.mm */,
 				2D2DF09C244B12BC00A368DE /* AppDelegate.swift */,
 				2D2DF09E244B12BC00A368DE /* SceneDelegate.swift */,
+				2D818EAA244B536F00552304 /* SessionHandler.swift */,
 				2D2DF0A0244B12BC00A368DE /* ViewController.swift */,
 				2D2DF0A2244B12BC00A368DE /* Main.storyboard */,
 				2D2DF0A5244B12BD00A368DE /* Assets.xcassets */,
 				2D2DF0A7244B12BD00A368DE /* LaunchScreen.storyboard */,
 				2D2DF0AA244B12BD00A368DE /* Info.plist */,
+				2D2DF0B1244B12E900A368DE /* ProcessImage.h */,
+				2D2DF0B2244B12E900A368DE /* ProcessImage.mm */,
+				2D2DF0B0244B12E800A368DE /* FaceCV-Bridging-Header.h */,
 			);
 			path = FaceCV;
+			sourceTree = "<group>";
+		};
+		2DAD25A3244B1C960096AA93 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				2D818E8A244B223800552304 /* opencv2.framework */,
+				2DAD25A4244B1C960096AA93 /* Accelerate.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -99,6 +142,7 @@
 				TargetAttributes = {
 					2D2DF098244B12BC00A368DE = {
 						CreatedOnToolsVersion = 11.3.1;
+						LastSwiftMigration = 1130;
 					};
 				};
 			};
@@ -125,6 +169,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2D818E89244B20B600552304 /* shape_predictor_68_face_landmarks.dat in Resources */,
 				2D2DF0A9244B12BD00A368DE /* LaunchScreen.storyboard in Resources */,
 				2D2DF0A6244B12BD00A368DE /* Assets.xcassets in Resources */,
 				2D2DF0A4244B12BC00A368DE /* Main.storyboard in Resources */,
@@ -138,9 +183,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2D818EA7244B4B8000552304 /* DlibWrapper.mm in Sources */,
 				2D2DF0A1244B12BC00A368DE /* ViewController.swift in Sources */,
+				2D818EAB244B536F00552304 /* SessionHandler.swift in Sources */,
 				2D2DF09D244B12BC00A368DE /* AppDelegate.swift in Sources */,
 				2D2DF09F244B12BC00A368DE /* SceneDelegate.swift in Sources */,
+				2D818E87244B1F3000552304 /* dlib_ios.mm in Sources */,
+				2D2DF0B3244B12E900A368DE /* ProcessImage.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -284,15 +333,35 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = PD5VA8QCB9;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					DLIB_NO_GUI_SUPPORT,
+					DLIB_JPEG_SUPPORT,
+					NDEBUG,
+					DLIB_USE_BLAS,
+					DLIB_USE_LAPACK,
+				);
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/lib";
 				INFOPLIST_FILE = FaceCV/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/lib",
+					"$(PROJECT_DIR)",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.mfad.FaceCV;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "FaceCV/FaceCV-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -302,15 +371,34 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = PD5VA8QCB9;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					DLIB_NO_GUI_SUPPORT,
+					DLIB_JPEG_SUPPORT,
+					NDEBUG,
+					DLIB_USE_BLAS,
+					DLIB_USE_LAPACK,
+				);
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/lib";
 				INFOPLIST_FILE = FaceCV/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/lib",
+					"$(PROJECT_DIR)",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.mfad.FaceCV;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "FaceCV/FaceCV-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
