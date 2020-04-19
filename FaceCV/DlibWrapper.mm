@@ -115,9 +115,7 @@ enum EyeLandMarks {
     // convert the face bounds list to dlib format
     std::vector<dlib::rectangle> convertedRectangles = [DlibWrapper convertCGRectValueArray:rects];
     
-    cv::Mat matImg = dlib::toMat(img).clone();
-    cv::Mat matGray = cv::Mat();
-    cv::cvtColor(matImg, matGray, cv::COLOR_BGR2GRAY);
+    
 
     // for every detected face
     for (unsigned long j = 0; j < convertedRectangles.size(); ++j)
@@ -129,12 +127,6 @@ enum EyeLandMarks {
         // detect all landmarks
         dlib::full_object_detection shape = sp(img, oneFaceRect);
         //std::cout << shape.part(36) << std::endl;
-        
-        // and draw them into the image (samplebuffer)
-        //for (unsigned long k = 0; k < shape.num_parts(); k++) {
-        //    dlib::point p = shape.part(k);
-        //    draw_solid_circle(img, p, 3, dlib::rgb_pixel(0, 255, 255));
-        //}
         
         //draw at eye landmarks
         for (unsigned long k: self.eyeLandMarkPoints) {
@@ -205,6 +197,9 @@ enum EyeLandMarks {
                 max_y = leftEyeRegion[i].y();
             }
         }
+        cv::Mat matImg = dlib::toMat(img);
+        cv::Mat matGray = cv::Mat();
+        cv::cvtColor(matImg, matGray, cv::COLOR_BGR2GRAY);
         
         // draw eyeris
         //cv::polylines(matImg, points, true, cv::Scalar(0, 0, 255), 2);
@@ -218,6 +213,25 @@ enum EyeLandMarks {
             // set the threshold value for the cropped eye image
             cv::Mat eyeImgGraytThres = cv::Mat();
             cv::threshold(matEyeImgGray, eyeImgGraytThres, 70, 250, cv::THRESH_BINARY);
+            
+            int widthThres = eyeImgGraytThres.cols;
+            int heightThres = eyeImgGraytThres.rows;
+            
+            cv::Rect cropLeftSide(0, 0, (int)(widthThres / 2), heightThres);
+            cv::Rect cropRightSide((int)(widthThres / 2), 0, (int)(widthThres / 2), heightThres);
+            
+            cv::Mat leftSideThres = eyeImgGraytThres(cropLeftSide);
+            cv::Mat rightSideThres = eyeImgGraytThres(cropRightSide);
+
+            int leftSideWhite = cv::countNonZero(leftSideThres);
+            int rightSideWhite = cv::countNonZero(rightSideThres);
+            
+            float gazeRatio = leftSideWhite / rightSideWhite;
+            
+            std::ostringstream gzRatioStr;
+            gzRatioStr << gazeRatio << std::endl;
+            
+            cv::putText(matImg, gzRatioStr.str(), cv::Point(width / 2, height / 2), cv::FONT_HERSHEY_PLAIN, 5, cv::Scalar(0, 0, 255), 2,8,false);
 
             //Then define mask image
             cv::Mat mask = cv::Mat::zeros(matImg.size(), CV_8UC1);
@@ -232,32 +246,33 @@ enum EyeLandMarks {
             cv::Mat matLeftEyeGray = cv::Mat();
             cv::bitwise_and(matGray, mask, matLeftEyeGray);
             
+            
+     /*
             // convert and merge back to dlib image
-            switch (matLeftEyeGray.type()) {
+            switch (matImg.type()) {
                 case CV_8UC3:
-                    dlib::assign_image(img, dlib::cv_image<dlib::bgr_pixel>(matLeftEyeGray));
+                    dlib::assign_image(img, dlib::cv_image<dlib::bgr_pixel>(matImg));
                     break;
                 case CV_8UC4: {
-                    cv::Mat tmp = matLeftEyeGray.clone();
+                    cv::Mat tmp = matImg.clone();
                     cv::cvtColor(tmp, tmp, cv::COLOR_BGRA2RGBA);
                     dlib::assign_image(img, dlib::cv_image<dlib::rgb_alpha_pixel>(tmp));
                 }
                     break;
                 case CV_8UC1:
-                    dlib::assign_image(img, dlib::cv_image<unsigned char>(matLeftEyeGray));
+                    dlib::assign_image(img, dlib::cv_image<unsigned char>(matImg));
                     break;
                 default:
                     break;
             }
-            
- 
+            */
         }
         catch(cv::Exception & e) {
             std::cerr << e.msg << std::endl;
         }
+      
+        
     }
-    
-    
     
     // lets put everything back where it belongs
     CVPixelBufferLockBaseAddress(imageBuffer, 0);
