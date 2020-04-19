@@ -211,14 +211,9 @@ enum EyeLandMarks {
         
         try{
             
-            // crop and get only the eye
-            cv::Mat matImgClone = matImg.clone();
+            // crop grayscale image and get only the eye
             cv::Rect cropRect(min_x, min_y, max_x - min_x, max_y - min_y);
-            cv::Mat matEyeImg = matImgClone(cropRect);
-
-            // gray scale the cropped eye image
-            cv::Mat matEyeImgGray = cv::Mat();
-            cv::cvtColor(matEyeImg, matEyeImgGray, cv::COLOR_BGR2GRAY);
+            cv::Mat matEyeImgGray = matGray(cropRect);
 
             // set the threshold value for the cropped eye image
             cv::Mat eyeImgGraytThres = cv::Mat();
@@ -234,22 +229,22 @@ enum EyeLandMarks {
             cv::polylines(mask, points, true, cv::Scalar::all(255), 2);
             cv::fillPoly(mask, fillContAll, cv::Scalar::all(255));
             
-            cv::Mat matLeftEye = cv::Mat();
-            cv::bitwise_and(matGray, mask, matLeftEye);
+            cv::Mat matLeftEyeGray = cv::Mat();
+            cv::bitwise_and(matGray, mask, matLeftEyeGray);
             
             // convert and merge back to dlib image
-            switch (matLeftEye.type()) {
+            switch (matLeftEyeGray.type()) {
                 case CV_8UC3:
-                    dlib::assign_image(img, dlib::cv_image<dlib::bgr_pixel>(matLeftEye));
+                    dlib::assign_image(img, dlib::cv_image<dlib::bgr_pixel>(matLeftEyeGray));
                     break;
                 case CV_8UC4: {
-                    cv::Mat tmp = matLeftEye.clone();
+                    cv::Mat tmp = matLeftEyeGray.clone();
                     cv::cvtColor(tmp, tmp, cv::COLOR_BGRA2RGBA);
                     dlib::assign_image(img, dlib::cv_image<dlib::rgb_alpha_pixel>(tmp));
                 }
                     break;
                 case CV_8UC1:
-                    dlib::assign_image(img, dlib::cv_image<unsigned char>(matLeftEye));
+                    dlib::assign_image(img, dlib::cv_image<unsigned char>(matLeftEyeGray));
                     break;
                 default:
                     break;
