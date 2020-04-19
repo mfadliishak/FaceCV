@@ -12,6 +12,7 @@
 #include <dlib/opencv.h>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
+#include <opencv2/core/core.hpp>
 #include <dlib/image_processing/frontal_face_detector.h>
 #include <dlib/image_processing.h>
 #include <dlib/image_io.h>
@@ -113,6 +114,10 @@ enum EyeLandMarks {
     
     // convert the face bounds list to dlib format
     std::vector<dlib::rectangle> convertedRectangles = [DlibWrapper convertCGRectValueArray:rects];
+    
+    cv::Mat matImg = dlib::toMat(img).clone();
+    cv::Mat matGray = cv::Mat();
+    cv::cvtColor(matImg, matGray, cv::COLOR_BGR2GRAY);
 
     // for every detected face
     for (unsigned long j = 0; j < convertedRectangles.size(); ++j)
@@ -176,16 +181,88 @@ enum EyeLandMarks {
             shape.part(self.eyeLandMarkPoints[EyeLandMarks::LEFT_41]),
         };
         
-        cv::Mat matImg = dlib::toMat(img);
+        
         std::vector<cv::Point> points;
+        
+        int min_x = 999;
+        int max_x = 0;
+        int min_y = 999;
+        int max_y = 0;
         
         for(int i=0; i < leftEyeRegion.size(); i++){
             points.push_back(cv::Point(leftEyeRegion[i].x(), leftEyeRegion[i].y()));
+            
+            if(min_x > leftEyeRegion[i].x()) {
+                min_x = leftEyeRegion[i].x();
+            }
+            if(min_y > leftEyeRegion[i].y()) {
+                min_y = leftEyeRegion[i].y();
+            }
+            if(max_x < leftEyeRegion[i].x()) {
+                max_x = leftEyeRegion[i].x();
+            }
+            if(max_y < leftEyeRegion[i].y()) {
+                max_y = leftEyeRegion[i].y();
+            }
         }
         
-        cv::polylines(matImg, points, true, cv::Scalar(0, 0, 255), 2);
+        // draw eyeris
+        //cv::polylines(matImg, points, true, cv::Scalar(0, 0, 255), 2);
         
+        try{
+            
+            // crop and get only the eye
+            cv::Mat matImgClone = matImg.clone();
+            cv::Rect cropRect(min_x, min_y, max_x - min_x, max_y - min_y);
+            cv::Mat matEyeImg = matImgClone(cropRect);
+
+            // gray scale the cropped eye image
+            cv::Mat matEyeImgGray = cv::Mat();
+            cv::cvtColor(matEyeImg, matEyeImgGray, cv::COLOR_BGR2GRAY);
+
+            // set the threshold value for the cropped eye image
+            cv::Mat eyeImgGraytThres = cv::Mat();
+            cv::threshold(matEyeImgGray, eyeImgGraytThres, 70, 250, cv::THRESH_BINARY);
+
+            //Then define mask image
+            cv::Mat mask = cv::Mat::zeros(matImg.size(), CV_8UC1);
+            
+            std::vector<std::vector<cv::Point> > fillContAll;
+            fillContAll.push_back(points);
+            
+            // color the mask with white on the eye region
+            cv::polylines(mask, points, true, cv::Scalar::all(255), 2);
+            cv::fillPoly(mask, fillContAll, cv::Scalar::all(255));
+            
+            cv::Mat matLeftEye = cv::Mat();
+            cv::bitwise_and(matGray, mask, matLeftEye);
+            
+            // convert and merge back to dlib image
+            switch (matLeftEye.type()) {
+                case CV_8UC3:
+                    dlib::assign_image(img, dlib::cv_image<dlib::bgr_pixel>(matLeftEye));
+                    break;
+                case CV_8UC4: {
+                    cv::Mat tmp = matLeftEye.clone();
+                    cv::cvtColor(tmp, tmp, cv::COLOR_BGRA2RGBA);
+                    dlib::assign_image(img, dlib::cv_image<dlib::rgb_alpha_pixel>(tmp));
+                }
+                    break;
+                case CV_8UC1:
+                    dlib::assign_image(img, dlib::cv_image<unsigned char>(matLeftEye));
+                    break;
+                default:
+                    break;
+            }
+            
+ 
+        }
+        catch(cv::Exception & e) {
+            std::cerr << e.msg << std::endl;
+        }
     }
+    
+    
     
     // lets put everything back where it belongs
     CVPixelBufferLockBaseAddress(imageBuffer, 0);
@@ -243,8 +320,8 @@ enum EyeLandMarks {
     dlib::point centerTopPoint = [DlibWrapper lineMidPoint:shape.part(topLeftPointIndex) withPoint2:shape.part(topRightPointIndex)];
     dlib::point centerBottomPoint = [DlibWrapper lineMidPoint:shape.part(bottomLeftPointIndex) withPoint2:shape.part(bottomRightPointIndex)];
     
-    dlib::draw_line(img, leftPoint, rightPoint, dlib::rgb_pixel(0, 255, 0));
-    dlib::draw_line(img, centerTopPoint, centerBottomPoint, dlib::rgb_pixel(0, 255, 0));
+    //dlib::draw_line(img, leftPoint, rightPoint, dlib::rgb_pixel(0, 255, 0));
+    //dlib::draw_line(img, centerTopPoint, centerBottomPoint, dlib::rgb_pixel(0, 255, 0));
     
     double horLineLenght = std::hypot(leftPoint.x() - rightPoint.x(),
                                       leftPoint.y() - rightPoint.y());
