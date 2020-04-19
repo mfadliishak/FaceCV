@@ -38,7 +38,8 @@ enum EyeLandMarks {
          withBottomRight:(unsigned long)bottomRightPointIndex;
 
 + (double) getGazeRatio:(std::vector<dlib::point>) dlibPoints withMat:(cv::Mat&) matImg
-            withMatGray:(cv::Mat&) matGray withImgWidth:(int)width withImgHeight:(int)height;
+            withMatGray:(cv::Mat&) matGray withImg:(dlib::array2d<dlib::bgr_pixel>&)img
+           withImgWidth:(int)width withImgHeight:(int)height;
 
 @end
 @implementation DlibWrapper {
@@ -186,9 +187,9 @@ enum EyeLandMarks {
             shape.part(self.eyeLandMarkPoints[EyeLandMarks::RIGHT_47]),
         };
         
-        double leftGazeRatio = [DlibWrapper getGazeRatio:leftEyeRegion withMat:matImg withMatGray:matGray withImgWidth:width withImgHeight:height];
+        double leftGazeRatio = [DlibWrapper getGazeRatio:leftEyeRegion withMat:matImg   withMatGray:matGray withImg:img withImgWidth:width withImgHeight:height];
         
-        double rightGazeRatio = [DlibWrapper getGazeRatio:rightEyeRegion withMat:matImg withMatGray:matGray withImgWidth:width withImgHeight:height];
+        double rightGazeRatio = [DlibWrapper getGazeRatio:rightEyeRegion withMat:matImg   withMatGray:matGray withImg:img withImgWidth:width withImgHeight:height];
         
         double gazeRatio = (leftGazeRatio + rightGazeRatio) / 2;
         
@@ -284,8 +285,9 @@ enum EyeLandMarks {
     return ratio;
 }
 
-+ (double) getGazeRatio:(std::vector<dlib::point>) dlibPoints  withMat:(cv::Mat&) matImg
-            withMatGray:(cv::Mat&) matGray  withImgWidth:(int)width withImgHeight:(int)height {
++ (double) getGazeRatio:(std::vector<dlib::point>) dlibPoints  withMat:(cv::Mat&)matImg
+            withMatGray:(cv::Mat&)matGray withImg:(dlib::array2d<dlib::bgr_pixel>&)img
+           withImgWidth:(int)width withImgHeight:(int)height {
 
     int min_x = 999;
     int max_x = 0;
@@ -312,13 +314,14 @@ enum EyeLandMarks {
         }
     }
     
-    // draw eyeris
-    cv::polylines(matImg, points, true, cv::Scalar(0, 0, 255), 2);
-    
     try {
+        // draw eyeris
+        //cv::polylines(matImg, points, true, cv::Scalar(0, 0, 255), 2);
+        
         // crop grayscale image and get only the eye
         cv::Rect cropRect(min_x, min_y, max_x - min_x, max_y - min_y);
         cv::Mat matEyeImgGray = matGray(cropRect);
+        cv::Mat matEyeImg = matImg(cropRect);
 
         // set the threshold value for the cropped eye image
         cv::Mat eyeImgGraytThres = cv::Mat();
@@ -356,8 +359,37 @@ enum EyeLandMarks {
         cv::polylines(mask, points, true, cv::Scalar::all(255), 2);
         cv::fillPoly(mask, fillContAll, cv::Scalar::all(255));
         
-        cv::Mat matLeftEyeGray = cv::Mat();
-        cv::bitwise_and(matGray, mask, matLeftEyeGray);
+        cv::Mat matEyeGray = cv::Mat();
+        cv::bitwise_and(matGray, mask, matEyeGray);
+        
+        // threshold to detect pupil
+        cv::Mat matPupilThres = cv::Mat();
+        cv::threshold(eyeImgGraytThres, matPupilThres, 7, 255, cv::THRESH_BINARY_INV);
+        
+        // to reduce noice
+        cv::GaussianBlur(matPupilThres, matPupilThres, cv::Size(7, 7), 0);
+        
+        // get the pupils points
+        std::vector<std::vector<cv::Point>> contours;
+        cv::findContours(matPupilThres, contours, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
+        
+        // sort contours area to find the biggest
+        std::sort(contours.begin(), contours.end(),
+                  [](const std::vector<cv::Point>& c1, const std::vector<cv::Point>& c2){
+            return cv::contourArea(c1, false) < cv::contourArea(c2, false);
+        });
+        
+        // draw the biggest contour
+        if (contours.size() > 0) {
+            cv::Rect pRect = cv::boundingRect(contours[contours.size()-1]);
+            cv::rectangle(matEyeImg, pRect, cv::Scalar(255, 0, 255), 2);
+            //cv::line(matEyeImg, cv::Point(pRect.x + (int)(pRect.width / 2), 0), cv::Point(pRect.x + (int)(pRect.width / 2), matEyeImg.rows), cv::Scalar(255, 0, 0), 2);
+            //cv::line(matEyeImg, cv::Point(0, pRect.y + (int)(pRect.height / 2)), cv::Point(matEyeImg.cols, pRect.y + (int)(pRect.height / 2)), cv::Scalar(255, 0, 0), 2);
+        }
+        //cv::drawContours(matEyeImg, contours, contours.size()-1, cv::Scalar(0, 0, 255), 3);
+        
+        //matEyeImg.copyTo(matImg(cv::Rect(min_x, min_y, matEyeImg.cols, matEyeImg.rows)));
+        
     }
     catch(cv::Exception & e) {
         std::cerr << "getGazeRatio err: " << e.msg << std::endl;
