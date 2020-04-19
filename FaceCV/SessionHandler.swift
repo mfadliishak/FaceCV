@@ -53,6 +53,16 @@ class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, A
             session.addOutput(metaOutput)
         }
         
+        // カメラの向きを合わせる
+        for connection in output.connections {
+            if connection.isVideoOrientationSupported {
+                connection.videoOrientation = AVCaptureVideoOrientation.portrait
+            }
+            if connection.isVideoMirroringSupported {
+                connection.isVideoMirrored = true
+            }
+        }
+        
         session.commitConfiguration()
         
         let settings: [AnyHashable: Any] = [kCVPixelBufferPixelFormatTypeKey as AnyHashable: Int(kCVPixelFormatType_32BGRA)]
@@ -86,12 +96,6 @@ class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, A
     
     func captureOutput(_ output: AVCaptureOutput, didDrop sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         print("DidDropSampleBuffer")
-        
-        connection.videoOrientation = AVCaptureVideoOrientation.portrait
-        
-        if connection.isVideoMirroringSupported {
-            connection.isVideoMirrored = true
-        }
     }
     
     // MARK: AVCaptureMetadataOutputObjectsDelegate
