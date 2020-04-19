@@ -29,14 +29,12 @@ class ViewController: UIViewController  {
         super.viewDidAppear(animated)
         
         sessionHandler.openSession()
-        
-        let preset = AVCaptureSession.Preset.medium //解像度
-        setImageViewLayout(preset: preset)//UIImageViewの大きさを調整
-        
 
         let layer = sessionHandler.layer
         layer.frame = cameraViewImage.bounds
-
+        layer.videoGravity = AVLayerVideoGravity.resizeAspectFill
+        layer.needsDisplayOnBoundsChange = true
+        
         cameraViewImage.layer.addSublayer(layer)
         
         view.layoutIfNeeded()
