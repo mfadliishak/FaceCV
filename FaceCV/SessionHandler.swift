@@ -8,6 +8,10 @@
 
 import AVFoundation
 
+protocol BlinkInfoDelegate: class {
+    func blinkedAction(_ isBlink: Bool, faceIndex: Int32?)
+}
+
 class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureMetadataOutputObjectsDelegate {
     var session = AVCaptureSession()
     let layer = AVSampleBufferDisplayLayer()
@@ -16,6 +20,8 @@ class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, A
     let wrapper = DlibWrapper()
     
     var currentMetadata: [AnyObject]
+    weak var blinkedDelegate:BlinkInfoDelegate?
+    
     
     override init() {
         currentMetadata = []
@@ -92,10 +98,15 @@ class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, A
         }
 
         layer.enqueue(sampleBuffer)
+        
+        let faceIndex = wrapper?.faceIndex ?? -1
+        let blinked = wrapper?.isBlink ?? false
+        blinkedDelegate?.blinkedAction(blinked, faceIndex: faceIndex)
+        
     }
     
     func captureOutput(_ output: AVCaptureOutput, didDrop sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        print("DidDropSampleBuffer")
+        //print("DidDropSampleBuffer")
     }
     
     // MARK: AVCaptureMetadataOutputObjectsDelegate

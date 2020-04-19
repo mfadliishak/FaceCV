@@ -9,15 +9,18 @@
 import UIKit
 import AVFoundation
 
-class ViewController: UIViewController  {
+class ViewController: UIViewController, BlinkInfoDelegate  {
     
-    let sessionHandler = SessionHandler()
+    var sessionHandler:SessionHandler? = nil
 
     @IBOutlet weak var cameraViewImage: UIImageView!
+    @IBOutlet weak var labelStatus: UILabel!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
+        sessionHandler = SessionHandler();
+        sessionHandler?.blinkedDelegate = self
     }
 
     override func didReceiveMemoryWarning() {
@@ -28,14 +31,14 @@ class ViewController: UIViewController  {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
-        sessionHandler.openSession()
+        sessionHandler?.openSession()
 
-        let layer = sessionHandler.layer
-        layer.frame = cameraViewImage.bounds
-        layer.videoGravity = AVLayerVideoGravity.resizeAspectFill
-        layer.needsDisplayOnBoundsChange = true
+        let layer = sessionHandler?.layer
+        layer?.frame = cameraViewImage.bounds
+        layer?.videoGravity = AVLayerVideoGravity.resizeAspectFill
+        layer?.needsDisplayOnBoundsChange = true
         
-        cameraViewImage.layer.addSublayer(layer)
+        cameraViewImage.layer.addSublayer(layer!)
         
         view.layoutIfNeeded()
 
@@ -62,6 +65,19 @@ class ViewController: UIViewController  {
             height = self.view.frame.height
         }
         cameraViewImage.frame = CGRect(x: 0, y: 0, width: width, height: height)
+    }
+    
+    func blinkedAction(_ isBlink: Bool, faceIndex: Int32?) {
+        if isBlink {
+            DispatchQueue.main.async {
+                self.labelStatus.text = "status:<Blink>"
+                _ = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { timer in
+                    self.labelStatus.text = "status:<>"
+                }
+            }
+            
+        }
+        
     }
 
 }

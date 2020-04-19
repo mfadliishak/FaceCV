@@ -15,4 +15,7 @@
 - (void)doWorkOnSampleBuffer:(CMSampleBufferRef)sampleBuffer inRects:(NSArray<NSValue *> *)rects;
 - (void)prepare;
 
+@property (assign) BOOL isBlink;
+@property (assign) int faceIndex;
+
 @end
