@@ -71,11 +71,16 @@ class ViewController: UIViewController, BlinkInfoDelegate  {
         if isBlink {
             DispatchQueue.main.async {
                 self.labelStatus.text = "status:<Blink>"
-                _ = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { timer in
-                    self.labelStatus.text = "status:<>"
-                }
+                //_ = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { timer in
+                //    self.labelStatus.text = "status:<>"
+                //}
             }
             
+        }
+        else {
+            DispatchQueue.main.async {
+                self.labelStatus.text = "status:<>"
+            }
         }
         
     }

@@ -25,7 +25,7 @@ enum EyeLandMarks {
 
 + (std::vector<dlib::rectangle>)convertCGRectValueArray:(NSArray<NSValue *> *)rects;
 + (dlib::point)lineMidPoint:(dlib::point)point1 withPoint2:(dlib::point) point2;
-+ (void)drawCrossLinesWithShape:(dlib::full_object_detection)shape withImg:(dlib::array2d<dlib::bgr_pixel>&)img
++ (double)getBlinkingRatio:(dlib::full_object_detection)shape withImg:(dlib::array2d<dlib::bgr_pixel>&)img
                  withLeft:(unsigned long)leftPointIndex
                 withRight: (unsigned long)RightPointIndex
              withTopLeft:(unsigned long)topLeftPointIndex
@@ -134,50 +134,33 @@ enum EyeLandMarks {
             draw_solid_circle(img, p, 3, dlib::rgb_pixel(0, 255, 255));
         }
         
-        // draw the horizontal and vertical lines
-        dlib::point LE_leftPoint = shape.part(self.eyeLandMarkPoints[EyeLandMarks::LEFT_36]);
-        dlib::point LE_rightPoint = shape.part(self.eyeLandMarkPoints[EyeLandMarks::LEFT_39]);
-        dlib::point LE_centerTopPoint = [DlibWrapper lineMidPoint:shape.part(self.eyeLandMarkPoints[EyeLandMarks::LEFT_37]) withPoint2:shape.part(self.eyeLandMarkPoints[EyeLandMarks::LEFT_38])];
-        dlib::point LE_centerBottomPoint = [DlibWrapper lineMidPoint:shape.part(self.eyeLandMarkPoints[EyeLandMarks::LEFT_41]) withPoint2:shape.part(self.eyeLandMarkPoints[EyeLandMarks::LEFT_40])];
+        // draw left eye lines, get blinking ratio
+        double blinkingRatioLeft = [DlibWrapper getBlinkingRatio:shape withImg:img
+                withLeft:self.eyeLandMarkPoints[EyeLandMarks::LEFT_36]
+              withRight:self.eyeLandMarkPoints[EyeLandMarks::LEFT_39]
+            withTopLeft:self.eyeLandMarkPoints[EyeLandMarks::LEFT_37]
+           withTopRight:self.eyeLandMarkPoints[EyeLandMarks::LEFT_38]
+         withBottomLeft:self.eyeLandMarkPoints[EyeLandMarks::LEFT_41]
+        withBottomRight:self.eyeLandMarkPoints[EyeLandMarks::LEFT_40]];
         
-        dlib::draw_line(img, LE_leftPoint, LE_rightPoint, dlib::rgb_pixel(0, 255, 0));
-        dlib::draw_line(img, LE_centerTopPoint, LE_centerBottomPoint, dlib::rgb_pixel(0, 255, 0));
-        
-        double horLineLenght = std::hypot(LE_leftPoint.x() - LE_rightPoint.x(),
-                                          LE_leftPoint.y() - LE_rightPoint.y());
-        double verLineLength = std::hypot(LE_centerTopPoint.x() - LE_centerBottomPoint.x(),
-                                        LE_centerTopPoint.y() - LE_centerBottomPoint.y());
-        
-        double ratio = horLineLenght / verLineLength;
-        
-        //std::cout << "ratio: " << ratio << std::endl;
-        
-        if(ratio < 3 ) {
-            std::cout << "blink" << j << std::endl;
-            _isBlink = YES;
-            _faceIndex = (int)j;
-        }
-        
-        
-        
-        /*
-        // draw left eye lines
-        [DlibWrapper drawCrossLinesWithShape:shape withImg:img
-                                    withLeft:self.eyeLandMarkPoints[EyeLandMarks::LEFT_36]
-                                  withRight:self.eyeLandMarkPoints[EyeLandMarks::LEFT_39]
-                                withTopLeft:self.eyeLandMarkPoints[EyeLandMarks::LEFT_37]
-                               withTopRight:self.eyeLandMarkPoints[EyeLandMarks::LEFT_38]
-                             withBottomLeft:self.eyeLandMarkPoints[EyeLandMarks::LEFT_41]
-                            withBottomRight:self.eyeLandMarkPoints[EyeLandMarks::LEFT_40]];
         // draw right eye lines
-        [DlibWrapper drawCrossLinesWithShape:shape withImg:img
+        double blinkingRatioRight = [DlibWrapper getBlinkingRatio:shape withImg:img
                 withLeft:self.eyeLandMarkPoints[EyeLandMarks::RIGHT_42]
               withRight:self.eyeLandMarkPoints[EyeLandMarks::RIGHT_45]
             withTopLeft:self.eyeLandMarkPoints[EyeLandMarks::RIGHT_43]
            withTopRight:self.eyeLandMarkPoints[EyeLandMarks::RIGHT_44]
          withBottomLeft:self.eyeLandMarkPoints[EyeLandMarks::RIGHT_47]
         withBottomRight:self.eyeLandMarkPoints[EyeLandMarks::RIGHT_46]];
-         */
+        
+        double blinkingRatio = (blinkingRatioLeft + blinkingRatioRight) / 2;
+        
+        //std::cout << "ratio: " << blinkingRatio << std::endl;
+        
+        if(blinkingRatio > 5.7 ) {
+            //std::cout << "blink" << j << std::endl;
+            _isBlink = YES;
+            _faceIndex = (int)j;
+        }
         
     }
     
@@ -223,7 +206,7 @@ enum EyeLandMarks {
                         (unsigned long)((point1.y() + point2.y()) / 2));
 }
 
-+ (void)drawCrossLinesWithShape:(dlib::full_object_detection)shape
++ (double)getBlinkingRatio:(dlib::full_object_detection)shape
                   withImg:(dlib::array2d<dlib::bgr_pixel>&)img
                  withLeft:(unsigned long)leftPointIndex
                 withRight: (unsigned long)RightPointIndex
@@ -232,14 +215,22 @@ enum EyeLandMarks {
           withBottomLeft:(unsigned long)bottomLeftPointIndex
          withBottomRight:(unsigned long)bottomRightPointIndex {
     
-    dlib::point LE_leftPoint = shape.part(leftPointIndex);
-    dlib::point LE_rightPoint = shape.part(RightPointIndex);
-    dlib::point LE_centerTopPoint = [DlibWrapper lineMidPoint:shape.part(topLeftPointIndex) withPoint2:shape.part(topRightPointIndex)];
-    dlib::point LE_centerBottomPoint = [DlibWrapper lineMidPoint:shape.part(bottomLeftPointIndex) withPoint2:shape.part(bottomRightPointIndex)];
+    dlib::point leftPoint = shape.part(leftPointIndex);
+    dlib::point rightPoint = shape.part(RightPointIndex);
+    dlib::point centerTopPoint = [DlibWrapper lineMidPoint:shape.part(topLeftPointIndex) withPoint2:shape.part(topRightPointIndex)];
+    dlib::point centerBottomPoint = [DlibWrapper lineMidPoint:shape.part(bottomLeftPointIndex) withPoint2:shape.part(bottomRightPointIndex)];
     
-    dlib::draw_line(img, LE_leftPoint, LE_rightPoint, dlib::rgb_pixel(0, 255, 0));
-    dlib::draw_line(img, LE_centerTopPoint, LE_centerBottomPoint, dlib::rgb_pixel(0, 255, 0));
+    dlib::draw_line(img, leftPoint, rightPoint, dlib::rgb_pixel(0, 255, 0));
+    dlib::draw_line(img, centerTopPoint, centerBottomPoint, dlib::rgb_pixel(0, 255, 0));
     
+    double horLineLenght = std::hypot(leftPoint.x() - rightPoint.x(),
+                                      leftPoint.y() - rightPoint.y());
+    double verLineLength = std::hypot(centerTopPoint.x() - centerBottomPoint.x(),
+                                    centerTopPoint.y() - centerBottomPoint.y());
+    
+    double ratio = horLineLenght / verLineLength;
+    
+    return ratio;
 }
 
 @end
