@@ -37,6 +37,9 @@ enum EyeLandMarks {
           withBottomLeft:(unsigned long)bottomLeftPointIndex
          withBottomRight:(unsigned long)bottomRightPointIndex;
 
++ (double) getGazeRatio:(std::vector<dlib::point>) dlibPoints withMat:(cv::Mat&) matImg
+            withMatGray:(cv::Mat&) matGray withImgWidth:(int)width withImgHeight:(int)height;
+
 @end
 @implementation DlibWrapper {
     dlib::shape_predictor sp;
@@ -115,11 +118,13 @@ enum EyeLandMarks {
     // convert the face bounds list to dlib format
     std::vector<dlib::rectangle> convertedRectangles = [DlibWrapper convertCGRectValueArray:rects];
     
-    
-
     // for every detected face
     for (unsigned long j = 0; j < convertedRectangles.size(); ++j)
     {
+        cv::Mat matImg = dlib::toMat(img);
+        cv::Mat matGray = cv::Mat();
+        cv::cvtColor(matImg, matGray, cv::COLOR_BGR2GRAY);
+        
         _isBlink = NO;
         _faceIndex = -1;
         dlib::rectangle oneFaceRect = convertedRectangles[j];
@@ -129,10 +134,10 @@ enum EyeLandMarks {
         //std::cout << shape.part(36) << std::endl;
         
         //draw at eye landmarks
-        for (unsigned long k: self.eyeLandMarkPoints) {
+        /*for (unsigned long k: self.eyeLandMarkPoints) {
             dlib::point p = shape.part(k);
             draw_solid_circle(img, p, 3, dlib::rgb_pixel(0, 255, 255));
-        }
+        }*/
         
         // draw left eye lines, get blinking ratio
         double blinkingRatioLeft = [DlibWrapper getBlinkingRatio:shape withImg:img
@@ -172,105 +177,41 @@ enum EyeLandMarks {
             shape.part(self.eyeLandMarkPoints[EyeLandMarks::LEFT_40]),
             shape.part(self.eyeLandMarkPoints[EyeLandMarks::LEFT_41]),
         };
+        std::vector<dlib::point> rightEyeRegion = {
+            shape.part(self.eyeLandMarkPoints[EyeLandMarks::RIGHT_42]),
+            shape.part(self.eyeLandMarkPoints[EyeLandMarks::RIGHT_43]),
+            shape.part(self.eyeLandMarkPoints[EyeLandMarks::RIGHT_44]),
+            shape.part(self.eyeLandMarkPoints[EyeLandMarks::RIGHT_45]),
+            shape.part(self.eyeLandMarkPoints[EyeLandMarks::RIGHT_46]),
+            shape.part(self.eyeLandMarkPoints[EyeLandMarks::RIGHT_47]),
+        };
         
+        double leftGazeRatio = [DlibWrapper getGazeRatio:leftEyeRegion withMat:matImg withMatGray:matGray withImgWidth:width withImgHeight:height];
         
-        std::vector<cv::Point> points;
+        double rightGazeRatio = [DlibWrapper getGazeRatio:rightEyeRegion withMat:matImg withMatGray:matGray withImgWidth:width withImgHeight:height];
         
-        int min_x = 999;
-        int max_x = 0;
-        int min_y = 999;
-        int max_y = 0;
+        double gazeRatio = (leftGazeRatio + rightGazeRatio) / 2;
         
-        for(int i=0; i < leftEyeRegion.size(); i++){
-            points.push_back(cv::Point(leftEyeRegion[i].x(), leftEyeRegion[i].y()));
+        std::ostringstream gzRatioStr;
+        gzRatioStr << gazeRatio << std::endl;
+        
+        if ( gazeRatio > 1.0) {
+            cv::putText(matImg, "RIGHT", cv::Point(width / 2, height - 200), cv::FONT_HERSHEY_PLAIN, 5, cv::Scalar(0, 0, 255), 3);
             
-            if(min_x > leftEyeRegion[i].x()) {
-                min_x = leftEyeRegion[i].x();
-            }
-            if(min_y > leftEyeRegion[i].y()) {
-                min_y = leftEyeRegion[i].y();
-            }
-            if(max_x < leftEyeRegion[i].x()) {
-                max_x = leftEyeRegion[i].x();
-            }
-            if(max_y < leftEyeRegion[i].y()) {
-                max_y = leftEyeRegion[i].y();
-            }
+            std::cout << "RIGHT" << std::endl;
+        
         }
-        cv::Mat matImg = dlib::toMat(img);
-        cv::Mat matGray = cv::Mat();
-        cv::cvtColor(matImg, matGray, cv::COLOR_BGR2GRAY);
-        
-        // draw eyeris
-        //cv::polylines(matImg, points, true, cv::Scalar(0, 0, 255), 2);
-        
-        try{
+        else if (gazeRatio > 0.0) {
+            cv::putText(matImg, "CENTER", cv::Point(width / 2, height - 200), cv::FONT_HERSHEY_PLAIN, 5, cv::Scalar(0, 0, 255), 3);
             
-            // crop grayscale image and get only the eye
-            cv::Rect cropRect(min_x, min_y, max_x - min_x, max_y - min_y);
-            cv::Mat matEyeImgGray = matGray(cropRect);
-
-            // set the threshold value for the cropped eye image
-            cv::Mat eyeImgGraytThres = cv::Mat();
-            cv::threshold(matEyeImgGray, eyeImgGraytThres, 70, 250, cv::THRESH_BINARY);
-            
-            int widthThres = eyeImgGraytThres.cols;
-            int heightThres = eyeImgGraytThres.rows;
-            
-            cv::Rect cropLeftSide(0, 0, (int)(widthThres / 2), heightThres);
-            cv::Rect cropRightSide((int)(widthThres / 2), 0, (int)(widthThres / 2), heightThres);
-            
-            cv::Mat leftSideThres = eyeImgGraytThres(cropLeftSide);
-            cv::Mat rightSideThres = eyeImgGraytThres(cropRightSide);
-
-            int leftSideWhite = cv::countNonZero(leftSideThres);
-            int rightSideWhite = cv::countNonZero(rightSideThres);
-            
-            float gazeRatio = leftSideWhite / rightSideWhite;
-            
-            std::ostringstream gzRatioStr;
-            gzRatioStr << gazeRatio << std::endl;
-            
-            cv::putText(matImg, gzRatioStr.str(), cv::Point(width / 2, height / 2), cv::FONT_HERSHEY_PLAIN, 5, cv::Scalar(0, 0, 255), 2,8,false);
-
-            //Then define mask image
-            cv::Mat mask = cv::Mat::zeros(matImg.size(), CV_8UC1);
-            
-            std::vector<std::vector<cv::Point> > fillContAll;
-            fillContAll.push_back(points);
-            
-            // color the mask with white on the eye region
-            cv::polylines(mask, points, true, cv::Scalar::all(255), 2);
-            cv::fillPoly(mask, fillContAll, cv::Scalar::all(255));
-            
-            cv::Mat matLeftEyeGray = cv::Mat();
-            cv::bitwise_and(matGray, mask, matLeftEyeGray);
-            
-            
-     /*
-            // convert and merge back to dlib image
-            switch (matImg.type()) {
-                case CV_8UC3:
-                    dlib::assign_image(img, dlib::cv_image<dlib::bgr_pixel>(matImg));
-                    break;
-                case CV_8UC4: {
-                    cv::Mat tmp = matImg.clone();
-                    cv::cvtColor(tmp, tmp, cv::COLOR_BGRA2RGBA);
-                    dlib::assign_image(img, dlib::cv_image<dlib::rgb_alpha_pixel>(tmp));
-                }
-                    break;
-                case CV_8UC1:
-                    dlib::assign_image(img, dlib::cv_image<unsigned char>(matImg));
-                    break;
-                default:
-                    break;
-            }
-            */
+            std::cout << "CENTER" << std::endl;
         }
-        catch(cv::Exception & e) {
-            std::cerr << e.msg << std::endl;
+        else {
+            cv::putText(matImg, "LEFT", cv::Point(width / 2, height - 200), cv::FONT_HERSHEY_PLAIN, 5, cv::Scalar(0, 0, 255), 3);
+            
+            std::cout << "LEFT" << std::endl;
+        
         }
-      
         
     }
     
@@ -341,6 +282,88 @@ enum EyeLandMarks {
     double ratio = horLineLenght / verLineLength;
     
     return ratio;
+}
+
++ (double) getGazeRatio:(std::vector<dlib::point>) dlibPoints  withMat:(cv::Mat&) matImg
+            withMatGray:(cv::Mat&) matGray  withImgWidth:(int)width withImgHeight:(int)height {
+
+    int min_x = 999;
+    int max_x = 0;
+    int min_y = 999;
+    int max_y = 0;
+    
+    double gazeRatio = 0;
+    std::vector<cv::Point> points;
+    
+    for(int i=0; i < dlibPoints.size(); i++){
+        points.push_back(cv::Point(dlibPoints[i].x(), dlibPoints[i].y()));
+        
+        if(min_x > dlibPoints[i].x()) {
+            min_x = dlibPoints[i].x();
+        }
+        if(min_y > dlibPoints[i].y()) {
+            min_y = dlibPoints[i].y();
+        }
+        if(max_x < dlibPoints[i].x()) {
+            max_x = dlibPoints[i].x();
+        }
+        if(max_y < dlibPoints[i].y()) {
+            max_y = dlibPoints[i].y();
+        }
+    }
+    
+    // draw eyeris
+    cv::polylines(matImg, points, true, cv::Scalar(0, 0, 255), 2);
+    
+    try {
+        // crop grayscale image and get only the eye
+        cv::Rect cropRect(min_x, min_y, max_x - min_x, max_y - min_y);
+        cv::Mat matEyeImgGray = matGray(cropRect);
+
+        // set the threshold value for the cropped eye image
+        cv::Mat eyeImgGraytThres = cv::Mat();
+        cv::threshold(matEyeImgGray, eyeImgGraytThres, 70, 250, cv::THRESH_BINARY);
+        
+        int widthThres = eyeImgGraytThres.cols;
+        int heightThres = eyeImgGraytThres.rows;
+        
+        cv::Rect cropLeftSide(0, 0, (int)(widthThres / 2), heightThres);
+        cv::Rect cropRightSide((int)(widthThres / 2), 0, (int)(widthThres / 2), heightThres);
+        
+        cv::Mat leftSideThres = eyeImgGraytThres(cropLeftSide);
+        cv::Mat rightSideThres = eyeImgGraytThres(cropRightSide);
+
+        int leftSideWhite = cv::countNonZero(leftSideThres);
+        int rightSideWhite = cv::countNonZero(rightSideThres);
+        
+        if (leftSideWhite == 0) {
+            gazeRatio = 1;
+        }
+        else if (rightSideWhite == 0) {
+            gazeRatio = 5;
+        }
+        else {
+            gazeRatio = leftSideWhite / rightSideWhite;
+        }
+
+        //Then define mask image
+        cv::Mat mask = cv::Mat::zeros(matImg.size(), CV_8UC1);
+        
+        std::vector<std::vector<cv::Point> > fillContAll;
+        fillContAll.push_back(points);
+        
+        // color the mask with white on the eye region
+        cv::polylines(mask, points, true, cv::Scalar::all(255), 2);
+        cv::fillPoly(mask, fillContAll, cv::Scalar::all(255));
+        
+        cv::Mat matLeftEyeGray = cv::Mat();
+        cv::bitwise_and(matGray, mask, matLeftEyeGray);
+    }
+    catch(cv::Exception & e) {
+        std::cerr << "getGazeRatio err: " << e.msg << std::endl;
+    }
+    
+    return gazeRatio;
 }
 
 @end
