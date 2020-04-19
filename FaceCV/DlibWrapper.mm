@@ -9,6 +9,9 @@
 #import "DlibWrapper.h"
 #import <UIKit/UIKit.h>
 
+#include <dlib/opencv.h>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
 #include <dlib/image_processing/frontal_face_detector.h>
 #include <dlib/image_processing.h>
 #include <dlib/image_io.h>
@@ -161,6 +164,26 @@ enum EyeLandMarks {
             _isBlink = YES;
             _faceIndex = (int)j;
         }
+        
+        // gaze detection
+        //=================
+        std::vector<dlib::point> leftEyeRegion = {
+            shape.part(self.eyeLandMarkPoints[EyeLandMarks::LEFT_36]),
+            shape.part(self.eyeLandMarkPoints[EyeLandMarks::LEFT_37]),
+            shape.part(self.eyeLandMarkPoints[EyeLandMarks::LEFT_38]),
+            shape.part(self.eyeLandMarkPoints[EyeLandMarks::LEFT_39]),
+            shape.part(self.eyeLandMarkPoints[EyeLandMarks::LEFT_40]),
+            shape.part(self.eyeLandMarkPoints[EyeLandMarks::LEFT_41]),
+        };
+        
+        cv::Mat matImg = dlib::toMat(img);
+        std::vector<cv::Point> points;
+        
+        for(int i=0; i < leftEyeRegion.size(); i++){
+            points.push_back(cv::Point(leftEyeRegion[i].x(), leftEyeRegion[i].y()));
+        }
+        
+        cv::polylines(matImg, points, true, cv::Scalar(0, 0, 255), 2);
         
     }
     
