@@ -241,14 +241,14 @@ const int kGAZE_INDEX_LEFT = 3;
             self.gazeIndex = self.lastGazeIndex;
         }
         else {
-            if ( gazeRatio >= 1.5) {
+            if ( gazeRatio >= 1.0) {
                 self.gazeIndex = self.lastGazeIndex = kGAZE_INDEX_RIGHT;
                 cv::putText(matImg, "RIGHT", cv::Point(static_cast<int>(width / 2), static_cast<int>(height - 200)), cv::FONT_HERSHEY_PLAIN, 5, cv::Scalar(0, 0, 255), 3);
                 
                 std::cout << "RIGHT" << std::endl;
             
             }
-            else if (gazeRatio > 0.0) {
+            else if (gazeRatio >= 0.5) {
                 self.gazeIndex = self.lastGazeIndex = kGAZE_INDEX_CENTER;
                 cv::putText(matImg, "CENTER", cv::Point(static_cast<int>(width / 2), static_cast<int>(height - 200)), cv::FONT_HERSHEY_PLAIN, 5, cv::Scalar(0, 0, 255), 3);
                 
