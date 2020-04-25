@@ -22,9 +22,10 @@ enum EyeLandMarks {
     RIGHT_42, RIGHT_43, RIGHT_44, RIGHT_45, RIGHT_46, RIGHT_47
 };
 
-const int kGAZE_INDEX_RIGHT = 0;
-const int kGAZE_INDEX_CENTER = 1;
-const int kGAZE_INDEX_LEFT = 2;
+const int kGAZE_INDEX_NONE = 0;
+const int kGAZE_INDEX_RIGHT = 1;
+const int kGAZE_INDEX_CENTER = 2;
+const int kGAZE_INDEX_LEFT = 3;
 
 @interface DlibWrapper ()
 
@@ -61,8 +62,8 @@ const int kGAZE_INDEX_LEFT = 2;
         _prepared = NO;
         _isBlink = NO;
         _faceIndex = -1;
-        _gazeIndex = 1;
-        _lastGazeIndex = 1;
+        _gazeIndex = kGAZE_INDEX_NONE;
+        _lastGazeIndex = kGAZE_INDEX_NONE;
         
     }
     return self;
@@ -92,6 +93,7 @@ const int kGAZE_INDEX_LEFT = 2;
     }
     
     dlib::array2d<dlib::bgr_pixel> img;
+    self.gazeIndex = kGAZE_INDEX_NONE;
     
     // MARK: magic
     CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
@@ -145,11 +147,18 @@ const int kGAZE_INDEX_LEFT = 2;
         dlib::full_object_detection shape = sp(img, oneFaceRect);
         //std::cout << shape.part(36) << std::endl;
         
-        //draw at eye landmarks
-        for (unsigned long k: self.eyeLandMarkPoints) {
+        // draw all landmarks
+        for (unsigned long k = 0; k < shape.num_parts(); k++) {
             dlib::point p = shape.part(k);
             draw_solid_circle(img, p, 3, dlib::rgb_pixel(0, 255, 255));
         }
+
+        
+        //draw at eye landmarks
+        //for (unsigned long k: self.eyeLandMarkPoints) {
+        //    dlib::point p = shape.part(k);
+        //    draw_solid_circle(img, p, 3, dlib::rgb_pixel(0, 255, 255));
+        //}
         
         // draw left eye lines, get blinking ratio
         double blinkingRatioLeft = [DlibWrapper getBlinkingRatio:shape withImg:img
@@ -174,7 +183,7 @@ const int kGAZE_INDEX_LEFT = 2;
         std::ostringstream blinkingRatioStr;
         blinkingRatioStr  << blinkingRatio << std::endl;
         
-        std::cout << "ratio: " << blinkingRatioStr.str() << std::endl;
+        std::cout << "blinkratio: " << blinkingRatioStr.str() << std::endl;
         
         cv::putText(matImg, blinkingRatioStr.str(), cv::Point(20, static_cast<int>(height - 500)), cv::FONT_HERSHEY_PLAIN, 5, cv::Scalar(0, 0, 255), 3);
         
@@ -226,12 +235,13 @@ const int kGAZE_INDEX_LEFT = 2;
         
         std::ostringstream gzRatioStr;
         gzRatioStr << "gazeRatio: " << gazeRatio << std::endl;
+        std::cout << gzRatioStr.str() << std::endl;
         
         if (self.isBlink) {
             self.gazeIndex = self.lastGazeIndex;
         }
         else {
-            if ( gazeRatio > 1.0) {
+            if ( gazeRatio >= 1.5) {
                 self.gazeIndex = self.lastGazeIndex = kGAZE_INDEX_RIGHT;
                 cv::putText(matImg, "RIGHT", cv::Point(static_cast<int>(width / 2), static_cast<int>(height - 200)), cv::FONT_HERSHEY_PLAIN, 5, cv::Scalar(0, 0, 255), 3);
                 
@@ -355,7 +365,7 @@ const int kGAZE_INDEX_LEFT = 2;
     
     try {
         // draw eyeris
-        //cv::polylines(matImg, points, true, cv::Scalar(0, 0, 255), 2);
+        cv::polylines(matImg, points, true, cv::Scalar(0, 0, 255), 2);
         
         // crop grayscale image and get only the eye
         cv::Rect cropRect(min_x, min_y, max_x - min_x, max_y - min_y);

@@ -18,6 +18,9 @@ class ViewController: UIViewController, FacialMovementDelegate {
 
     @IBOutlet weak var cameraViewImage: UIImageView!
     @IBOutlet weak var labelStatus: UILabel!
+    @IBOutlet weak var rightButton: UIButton!
+    @IBOutlet weak var centerButton: UIButton!
+    @IBOutlet weak var leftButton: UIButton!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -91,6 +94,43 @@ class ViewController: UIViewController, FacialMovementDelegate {
             }
         }
         
+        self.resetButtons()
+        self.highlightButton(gazeIndex: gazeIndex)
+        
+    }
+    
+    func resetButtons() {
+        DispatchQueue.main.async {
+            self.leftButton.isHighlighted = false;
+            self.rightButton.isHighlighted = false;
+            self.centerButton.isHighlighted = false;
+            
+            self.leftButton.backgroundColor = UIColor.systemYellow;
+            self.rightButton.backgroundColor = UIColor.systemYellow;
+            self.centerButton.backgroundColor = UIColor.systemYellow;
+        }
+    }
+    
+    func highlightButton(gazeIndex: Int32) {
+        DispatchQueue.main.async {
+            switch gazeIndex {
+            case kGAZE_INDEX_LEFT:
+                self.leftButton.isHighlighted = true;
+                self.leftButton.backgroundColor = UIColor.systemPink;
+                break;
+            case kGAZE_INDEX_RIGHT:
+                self.rightButton.isHighlighted = true;
+                self.rightButton.backgroundColor = UIColor.systemPink;
+                break;
+            case kGAZE_INDEX_CENTER:
+                self.centerButton.isHighlighted = true;
+                self.centerButton.backgroundColor = UIColor.systemPink;
+                break;
+            default:
+                self.resetButtons();
+                break;
+            }
+        }
     }
     
     @objc func dragImg(_ sender:UIPanGestureRecognizer){

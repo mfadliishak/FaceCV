@@ -95,14 +95,20 @@ class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, A
             }
             
             wrapper?.doWork(on: sampleBuffer, inRects: boundsArray)
+            
+            let faceIndex = wrapper?.faceIndex ?? -1
+            let blinked = wrapper?.isBlink ?? false
+            let gazeIndex = wrapper?.gazeIndex ?? kGAZE_INDEX_NONE;
+            //print(gazeIndex);
+            facialMovementDelegate?.eyeTrackingAction(blinked, faceIndex: faceIndex, gazeIndex: gazeIndex)
+        }
+        else {
+            facialMovementDelegate?.eyeTrackingAction(false, faceIndex: -1, gazeIndex: kGAZE_INDEX_NONE)
         }
 
         layer.enqueue(sampleBuffer)
         
-        let faceIndex = wrapper?.faceIndex ?? -1
-        let blinked = wrapper?.isBlink ?? false
-        let gazeIndex = wrapper?.gazeIndex ?? -1;
-        facialMovementDelegate?.eyeTrackingAction(blinked, faceIndex: faceIndex, gazeIndex: gazeIndex)
+        
         
     }
     

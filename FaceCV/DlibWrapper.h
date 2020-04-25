@@ -12,6 +12,7 @@
 extern const int kGAZE_INDEX_RIGHT;
 extern const int kGAZE_INDEX_CENTER;
 extern const int kGAZE_INDEX_LEFT;
+extern const int kGAZE_INDEX_NONE;
 
 @interface DlibWrapper : NSObject
 
