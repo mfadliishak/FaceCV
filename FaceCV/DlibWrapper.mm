@@ -37,9 +37,11 @@ enum EyeLandMarks {
           withBottomLeft:(unsigned long)bottomLeftPointIndex
          withBottomRight:(unsigned long)bottomRightPointIndex;
 
-+ (double) getGazeRatio:(std::vector<dlib::point>) dlibPoints withMat:(cv::Mat&) matImg
++ (cv::Point) getPupilPoint:(std::vector<dlib::point>) dlibPoints withMat:(cv::Mat&) matImg
             withMatGray:(cv::Mat&) matGray withImg:(dlib::array2d<dlib::bgr_pixel>&)img
            withImgWidth:(int)width withImgHeight:(int)height;
+
++ (cv::Point) midPoint:(cv::Point)point1 withPoint2:(cv::Point)point2;
 
 @end
 @implementation DlibWrapper {
@@ -187,15 +189,28 @@ enum EyeLandMarks {
             shape.part(self.eyeLandMarkPoints[EyeLandMarks::RIGHT_47]),
         };
         
-        double leftGazeRatio = [DlibWrapper getGazeRatio:leftEyeRegion withMat:matImg   withMatGray:matGray withImg:img withImgWidth:width withImgHeight:height];
+        cv::Point leftPupilPoint = [DlibWrapper getPupilPoint:leftEyeRegion withMat:matImg   withMatGray:matGray withImg:img withImgWidth:width withImgHeight:height];
         
-        double rightGazeRatio = [DlibWrapper getGazeRatio:rightEyeRegion withMat:matImg   withMatGray:matGray withImg:img withImgWidth:width withImgHeight:height];
+        cv::Point rightPupilPoint = [DlibWrapper getPupilPoint:rightEyeRegion withMat:matImg   withMatGray:matGray withImg:img withImgWidth:width withImgHeight:height];
         
-        double gazeRatio = (leftGazeRatio + rightGazeRatio) / 2;
+        cv::Point midPoint = [DlibWrapper midPoint:leftPupilPoint withPoint2:rightPupilPoint];
         
-        std::ostringstream gzRatioStr;
-        gzRatioStr << gazeRatio << std::endl;
+        std::cout << midPoint.x << "," << midPoint.y << std::endl;
         
+        if(midPoint.x > 0 && midPoint.y > 0) {
+            cv::circle(matImg, midPoint, 10, cv::Scalar(255, 0, 255), cv::FILLED, 8);
+            cv::line(matImg, leftPupilPoint, rightPupilPoint, cv::Scalar(255, 255, 255), 2);
+        }
+        
+        //double gazeRatio = (leftGazeRatio + rightGazeRatio) / 2;
+        
+        //std::ostringstream gzRatioStr;
+        //gzRatioStr << gazeRatio << std::endl;
+        
+        
+        
+        
+        /*
         if ( gazeRatio > 1.0) {
             cv::putText(matImg, "RIGHT", cv::Point(width / 2, height - 200), cv::FONT_HERSHEY_PLAIN, 5, cv::Scalar(0, 0, 255), 3);
             
@@ -213,6 +228,7 @@ enum EyeLandMarks {
             std::cout << "LEFT" << std::endl;
         
         }
+         */
         
     }
     
@@ -285,7 +301,7 @@ enum EyeLandMarks {
     return ratio;
 }
 
-+ (double) getGazeRatio:(std::vector<dlib::point>) dlibPoints  withMat:(cv::Mat&)matImg
++ (cv::Point) getPupilPoint:(std::vector<dlib::point>) dlibPoints  withMat:(cv::Mat&)matImg
             withMatGray:(cv::Mat&)matGray withImg:(dlib::array2d<dlib::bgr_pixel>&)img
            withImgWidth:(int)width withImgHeight:(int)height {
 
@@ -296,6 +312,7 @@ enum EyeLandMarks {
     
     double gazeRatio = 0;
     std::vector<cv::Point> points;
+    cv::Point pupilCenterPoint = cv::Point(-1, -1);
     
     for(int i=0; i < dlibPoints.size(); i++){
         points.push_back(cv::Point(dlibPoints[i].x(), dlibPoints[i].y()));
@@ -385,17 +402,28 @@ enum EyeLandMarks {
             cv::rectangle(matEyeImg, pRect, cv::Scalar(255, 0, 255), 2);
             //cv::line(matEyeImg, cv::Point(pRect.x + (int)(pRect.width / 2), 0), cv::Point(pRect.x + (int)(pRect.width / 2), matEyeImg.rows), cv::Scalar(255, 0, 0), 2);
             //cv::line(matEyeImg, cv::Point(0, pRect.y + (int)(pRect.height / 2)), cv::Point(matEyeImg.cols, pRect.y + (int)(pRect.height / 2)), cv::Scalar(255, 0, 0), 2);
+            
+            pupilCenterPoint.x = min_x + pRect.x + (int)(pRect.width / 2);
+            pupilCenterPoint.y = min_y + pRect.y + (int)(pRect.height / 2);
+            
         }
         //cv::drawContours(matEyeImg, contours, contours.size()-1, cv::Scalar(0, 0, 255), 3);
         
         //matEyeImg.copyTo(matImg(cv::Rect(min_x, min_y, matEyeImg.cols, matEyeImg.rows)));
+        
+        
         
     }
     catch(cv::Exception & e) {
         std::cerr << "getGazeRatio err: " << e.msg << std::endl;
     }
     
-    return gazeRatio;
+    return pupilCenterPoint;
+}
+
++ (cv::Point) midPoint:(cv::Point)point1 withPoint2:(cv::Point)point2 {
+    cv::Point point = cv::Point((point1.x + point2.x)/2, (point1.y + point2.y)/2);
+    return point;
 }
 
 @end

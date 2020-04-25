@@ -12,6 +12,7 @@ import AVFoundation
 class ViewController: UIViewController, BlinkInfoDelegate  {
     
     var sessionHandler:SessionHandler? = nil
+    var panGesture  = UIPanGestureRecognizer()
 
     @IBOutlet weak var cameraViewImage: UIImageView!
     @IBOutlet weak var labelStatus: UILabel!
@@ -21,6 +22,11 @@ class ViewController: UIViewController, BlinkInfoDelegate  {
         // Do any additional setup after loading the view, typically from a nib.
         sessionHandler = SessionHandler();
         sessionHandler?.blinkedDelegate = self
+        
+        //pan gesture for dragging an image
+        panGesture = UIPanGestureRecognizer(target: self, action: #selector(ViewController.dragImg(_:)))
+        cameraViewImage.isUserInteractionEnabled = true
+        cameraViewImage.addGestureRecognizer(panGesture)
     }
 
     override func didReceiveMemoryWarning() {
@@ -83,6 +89,19 @@ class ViewController: UIViewController, BlinkInfoDelegate  {
             }
         }
         
+    }
+    
+    @objc func dragImg(_ sender:UIPanGestureRecognizer){
+        let translation = sender.translation(in: self.view)
+        cameraViewImage.center = CGPoint(x: cameraViewImage.center.x + translation.x, y: cameraViewImage.center.y + translation.y)
+        sender.setTranslation(CGPoint.zero, in: self.view)
+        labelStatus.frame.origin =
+            CGPoint(x: cameraViewImage.frame.origin.x,
+                    y: cameraViewImage.frame.origin.y + cameraViewImage.frame.height + 20)
+    }
+    
+    @IBAction func scaleImg(_ sender: UIPinchGestureRecognizer) {
+       cameraViewImage.transform = CGAffineTransform(scaleX: sender.scale, y: sender.scale)
     }
 
 }
