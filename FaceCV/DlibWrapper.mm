@@ -22,10 +22,15 @@ enum EyeLandMarks {
     RIGHT_42, RIGHT_43, RIGHT_44, RIGHT_45, RIGHT_46, RIGHT_47
 };
 
+const int kGAZE_INDEX_RIGHT = 0;
+const int kGAZE_INDEX_CENTER = 1;
+const int kGAZE_INDEX_LEFT = 2;
+
 @interface DlibWrapper ()
 
 @property (assign) BOOL prepared;
 @property (assign) std::vector<unsigned long> eyeLandMarkPoints;
+@property (assign) int lastGazeIndex;
 
 + (std::vector<dlib::rectangle>)convertCGRectValueArray:(NSArray<NSValue *> *)rects;
 + (dlib::point)lineMidPoint:(dlib::point)point1 withPoint2:(dlib::point) point2;
@@ -37,9 +42,10 @@ enum EyeLandMarks {
           withBottomLeft:(unsigned long)bottomLeftPointIndex
          withBottomRight:(unsigned long)bottomRightPointIndex;
 
-+ (cv::Point) getPupilPoint:(std::vector<dlib::point>) dlibPoints withMat:(cv::Mat&) matImg
++ (void) drawEyeRegion:(std::vector<dlib::point>) dlibPoints withMat:(cv::Mat&) matImg
             withMatGray:(cv::Mat&) matGray withImg:(dlib::array2d<dlib::bgr_pixel>&)img
-           withImgWidth:(int)width withImgHeight:(int)height;
+           withImgWidth:(int)width withImgHeight:(int)height
+    withGazeRatio:(double&)gazeRatio withPupilPoint:(cv::Point&)pupilPoint;
 
 + (cv::Point) midPoint:(cv::Point)point1 withPoint2:(cv::Point)point2;
 
@@ -55,6 +61,9 @@ enum EyeLandMarks {
         _prepared = NO;
         _isBlink = NO;
         _faceIndex = -1;
+        _gazeIndex = 1;
+        _lastGazeIndex = 1;
+        
     }
     return self;
 }
@@ -128,8 +137,8 @@ enum EyeLandMarks {
         cv::Mat matGray = cv::Mat();
         cv::cvtColor(matImg, matGray, cv::COLOR_BGR2GRAY);
         
-        _isBlink = NO;
-        _faceIndex = -1;
+        self.isBlink = NO;
+        self.faceIndex = -1;
         dlib::rectangle oneFaceRect = convertedRectangles[j];
         
         // detect all landmarks
@@ -137,10 +146,10 @@ enum EyeLandMarks {
         //std::cout << shape.part(36) << std::endl;
         
         //draw at eye landmarks
-        /*for (unsigned long k: self.eyeLandMarkPoints) {
+        for (unsigned long k: self.eyeLandMarkPoints) {
             dlib::point p = shape.part(k);
             draw_solid_circle(img, p, 3, dlib::rgb_pixel(0, 255, 255));
-        }*/
+        }
         
         // draw left eye lines, get blinking ratio
         double blinkingRatioLeft = [DlibWrapper getBlinkingRatio:shape withImg:img
@@ -162,12 +171,17 @@ enum EyeLandMarks {
         
         double blinkingRatio = (blinkingRatioLeft + blinkingRatioRight) / 2;
         
-        //std::cout << "ratio: " << blinkingRatio << std::endl;
+        std::ostringstream blinkingRatioStr;
+        blinkingRatioStr  << blinkingRatio << std::endl;
         
-        if(blinkingRatio > 5.7 ) {
+        std::cout << "ratio: " << blinkingRatioStr.str() << std::endl;
+        
+        cv::putText(matImg, blinkingRatioStr.str(), cv::Point(20, static_cast<int>(height - 500)), cv::FONT_HERSHEY_PLAIN, 5, cv::Scalar(0, 0, 255), 3);
+        
+        if(blinkingRatio > 4.2 ) {
             //std::cout << "blink" << j << std::endl;
-            _isBlink = YES;
-            _faceIndex = (int)j;
+            self.isBlink = YES;
+            self.faceIndex = (int)j;
         }
         
         // gaze detection
@@ -189,9 +203,15 @@ enum EyeLandMarks {
             shape.part(self.eyeLandMarkPoints[EyeLandMarks::RIGHT_47]),
         };
         
-        cv::Point leftPupilPoint = [DlibWrapper getPupilPoint:leftEyeRegion withMat:matImg   withMatGray:matGray withImg:img withImgWidth:width withImgHeight:height];
+        // Get eye infos
+        double leftEyeGazeRatio = 0;
+        double rightEyeGazeRatio = 0;
+        cv::Point leftPupilPoint = cv::Point(-1, -1);
+        cv::Point rightPupilPoint = cv::Point(-1, -1);
         
-        cv::Point rightPupilPoint = [DlibWrapper getPupilPoint:rightEyeRegion withMat:matImg   withMatGray:matGray withImg:img withImgWidth:width withImgHeight:height];
+        [DlibWrapper drawEyeRegion:leftEyeRegion withMat:matImg   withMatGray:matGray withImg:img withImgWidth:static_cast<int>(width) withImgHeight:static_cast<int>(height) withGazeRatio: leftEyeGazeRatio withPupilPoint:leftPupilPoint];
+        
+        [DlibWrapper drawEyeRegion:rightEyeRegion withMat:matImg   withMatGray:matGray withImg:img withImgWidth:static_cast<int>(width) withImgHeight:static_cast<int>(height) withGazeRatio: rightEyeGazeRatio withPupilPoint:rightPupilPoint];
         
         cv::Point midPoint = [DlibWrapper midPoint:leftPupilPoint withPoint2:rightPupilPoint];
         
@@ -202,34 +222,36 @@ enum EyeLandMarks {
             cv::line(matImg, leftPupilPoint, rightPupilPoint, cv::Scalar(255, 255, 255), 2);
         }
         
-        //double gazeRatio = (leftGazeRatio + rightGazeRatio) / 2;
+        double gazeRatio = (leftEyeGazeRatio + rightEyeGazeRatio) / 2;
         
-        //std::ostringstream gzRatioStr;
-        //gzRatioStr << gazeRatio << std::endl;
+        std::ostringstream gzRatioStr;
+        gzRatioStr << "gazeRatio: " << gazeRatio << std::endl;
         
-        
-        
-        
-        /*
-        if ( gazeRatio > 1.0) {
-            cv::putText(matImg, "RIGHT", cv::Point(width / 2, height - 200), cv::FONT_HERSHEY_PLAIN, 5, cv::Scalar(0, 0, 255), 3);
-            
-            std::cout << "RIGHT" << std::endl;
-        
-        }
-        else if (gazeRatio > 0.0) {
-            cv::putText(matImg, "CENTER", cv::Point(width / 2, height - 200), cv::FONT_HERSHEY_PLAIN, 5, cv::Scalar(0, 0, 255), 3);
-            
-            std::cout << "CENTER" << std::endl;
+        if (self.isBlink) {
+            self.gazeIndex = self.lastGazeIndex;
         }
         else {
-            cv::putText(matImg, "LEFT", cv::Point(width / 2, height - 200), cv::FONT_HERSHEY_PLAIN, 5, cv::Scalar(0, 0, 255), 3);
+            if ( gazeRatio > 1.0) {
+                self.gazeIndex = self.lastGazeIndex = kGAZE_INDEX_RIGHT;
+                cv::putText(matImg, "RIGHT", cv::Point(static_cast<int>(width / 2), static_cast<int>(height - 200)), cv::FONT_HERSHEY_PLAIN, 5, cv::Scalar(0, 0, 255), 3);
+                
+                std::cout << "RIGHT" << std::endl;
             
-            std::cout << "LEFT" << std::endl;
-        
+            }
+            else if (gazeRatio > 0.0) {
+                self.gazeIndex = self.lastGazeIndex = kGAZE_INDEX_CENTER;
+                cv::putText(matImg, "CENTER", cv::Point(static_cast<int>(width / 2), static_cast<int>(height - 200)), cv::FONT_HERSHEY_PLAIN, 5, cv::Scalar(0, 0, 255), 3);
+                
+                std::cout << "CENTER" << std::endl;
+            }
+            else {
+                self.gazeIndex = self.lastGazeIndex = kGAZE_INDEX_LEFT;
+                cv::putText(matImg, "LEFT", cv::Point(static_cast<int>(width / 2), static_cast<int>(height - 200)), cv::FONT_HERSHEY_PLAIN, 5, cv::Scalar(0, 0, 255), 3);
+                
+                std::cout << "LEFT" << std::endl;
+            
+            }
         }
-         */
-        
     }
     
     // lets put everything back where it belongs
@@ -301,33 +323,33 @@ enum EyeLandMarks {
     return ratio;
 }
 
-+ (cv::Point) getPupilPoint:(std::vector<dlib::point>) dlibPoints  withMat:(cv::Mat&)matImg
++  (void) drawEyeRegion:(std::vector<dlib::point>) dlibPoints  withMat:(cv::Mat&)matImg
             withMatGray:(cv::Mat&)matGray withImg:(dlib::array2d<dlib::bgr_pixel>&)img
-           withImgWidth:(int)width withImgHeight:(int)height {
+           withImgWidth:(int)width withImgHeight:(int)height
+    withGazeRatio:(double&)gazeRatio withPupilPoint:(cv::Point&)pupilPoint{
 
     int min_x = 999;
     int max_x = 0;
     int min_y = 999;
     int max_y = 0;
     
-    double gazeRatio = 0;
     std::vector<cv::Point> points;
-    cv::Point pupilCenterPoint = cv::Point(-1, -1);
     
     for(int i=0; i < dlibPoints.size(); i++){
-        points.push_back(cv::Point(dlibPoints[i].x(), dlibPoints[i].y()));
+        points.push_back(cv::Point(static_cast<int>(dlibPoints[i].x()),
+                                   static_cast<int>(dlibPoints[i].y())));
         
         if(min_x > dlibPoints[i].x()) {
-            min_x = dlibPoints[i].x();
+            min_x = static_cast<int>(dlibPoints[i].x());
         }
         if(min_y > dlibPoints[i].y()) {
-            min_y = dlibPoints[i].y();
+            min_y = static_cast<int>(dlibPoints[i].y());
         }
         if(max_x < dlibPoints[i].x()) {
-            max_x = dlibPoints[i].x();
+            max_x = static_cast<int>(dlibPoints[i].x());
         }
         if(max_y < dlibPoints[i].y()) {
-            max_y = dlibPoints[i].y();
+            max_y = static_cast<int>(dlibPoints[i].y());
         }
     }
     
@@ -403,8 +425,8 @@ enum EyeLandMarks {
             //cv::line(matEyeImg, cv::Point(pRect.x + (int)(pRect.width / 2), 0), cv::Point(pRect.x + (int)(pRect.width / 2), matEyeImg.rows), cv::Scalar(255, 0, 0), 2);
             //cv::line(matEyeImg, cv::Point(0, pRect.y + (int)(pRect.height / 2)), cv::Point(matEyeImg.cols, pRect.y + (int)(pRect.height / 2)), cv::Scalar(255, 0, 0), 2);
             
-            pupilCenterPoint.x = min_x + pRect.x + (int)(pRect.width / 2);
-            pupilCenterPoint.y = min_y + pRect.y + (int)(pRect.height / 2);
+            pupilPoint.x = min_x + pRect.x + (int)(pRect.width / 2);
+            pupilPoint.y = min_y + pRect.y + (int)(pRect.height / 2);
             
         }
         //cv::drawContours(matEyeImg, contours, contours.size()-1, cv::Scalar(0, 0, 255), 3);
@@ -417,8 +439,6 @@ enum EyeLandMarks {
     catch(cv::Exception & e) {
         std::cerr << "getGazeRatio err: " << e.msg << std::endl;
     }
-    
-    return pupilCenterPoint;
 }
 
 + (cv::Point) midPoint:(cv::Point)point1 withPoint2:(cv::Point)point2 {

@@ -8,8 +8,8 @@
 
 import AVFoundation
 
-protocol BlinkInfoDelegate: class {
-    func blinkedAction(_ isBlink: Bool, faceIndex: Int32?)
+protocol FacialMovementDelegate: class {
+    func eyeTrackingAction(_ isBlink: Bool, faceIndex: Int32?, gazeIndex: Int32)
 }
 
 class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureMetadataOutputObjectsDelegate {
@@ -20,7 +20,7 @@ class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, A
     let wrapper = DlibWrapper()
     
     var currentMetadata: [AnyObject]
-    weak var blinkedDelegate:BlinkInfoDelegate?
+    weak var facialMovementDelegate:FacialMovementDelegate?
     
     
     override init() {
@@ -101,7 +101,8 @@ class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, A
         
         let faceIndex = wrapper?.faceIndex ?? -1
         let blinked = wrapper?.isBlink ?? false
-        blinkedDelegate?.blinkedAction(blinked, faceIndex: faceIndex)
+        let gazeIndex = wrapper?.gazeIndex ?? -1;
+        facialMovementDelegate?.eyeTrackingAction(blinked, faceIndex: faceIndex, gazeIndex: gazeIndex)
         
     }
     

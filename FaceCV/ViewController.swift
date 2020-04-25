@@ -9,10 +9,12 @@
 import UIKit
 import AVFoundation
 
-class ViewController: UIViewController, BlinkInfoDelegate  {
+class ViewController: UIViewController, FacialMovementDelegate {
     
     var sessionHandler:SessionHandler? = nil
     var panGesture  = UIPanGestureRecognizer()
+    var lastGazeIndex = 0
+    var blinkCounter = 0
 
     @IBOutlet weak var cameraViewImage: UIImageView!
     @IBOutlet weak var labelStatus: UILabel!
@@ -21,7 +23,7 @@ class ViewController: UIViewController, BlinkInfoDelegate  {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         sessionHandler = SessionHandler();
-        sessionHandler?.blinkedDelegate = self
+        sessionHandler?.facialMovementDelegate = self
         
         //pan gesture for dragging an image
         panGesture = UIPanGestureRecognizer(target: self, action: #selector(ViewController.dragImg(_:)))
@@ -73,7 +75,7 @@ class ViewController: UIViewController, BlinkInfoDelegate  {
         cameraViewImage.frame = CGRect(x: 0, y: 0, width: width, height: height)
     }
     
-    func blinkedAction(_ isBlink: Bool, faceIndex: Int32?) {
+    func eyeTrackingAction(_ isBlink: Bool, faceIndex: Int32?, gazeIndex: Int32) {
         if isBlink {
             DispatchQueue.main.async {
                 self.labelStatus.text = "status:<Blink>"

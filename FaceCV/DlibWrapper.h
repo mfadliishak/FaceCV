@@ -9,6 +9,10 @@
 #import <Foundation/Foundation.h>
 #import <CoreMedia/CoreMedia.h>
 
+extern const int kGAZE_INDEX_RIGHT;
+extern const int kGAZE_INDEX_CENTER;
+extern const int kGAZE_INDEX_LEFT;
+
 @interface DlibWrapper : NSObject
 
 - (instancetype)init;
@@ -17,5 +21,6 @@
 
 @property (assign) BOOL isBlink;
 @property (assign) int faceIndex;
+@property (assign) int gazeIndex;
 
 @end
